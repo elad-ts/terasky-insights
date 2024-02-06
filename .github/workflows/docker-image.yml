@@ -1,0 +1,36 @@
+name: OCI Image CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    # Login to GitHub Container Registry
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    # Build the Docker image with specific build arguments
+    - name: Build the Docker image
+      run: >
+        docker build
+        --progress=plain
+        --platform=linux/amd64
+        --build-arg TARGETVERSION=v0.21.3
+        --build-arg TARGETARCH=amd64
+        . -t ghcr.io/${{ github.actor }}/terasky-insights:latest
+
+    # Push the Docker image to GitHub Container Registry
+    - name: Push the Docker image
+      run: docker push ghcr.io/${{ github.actor }}/terasky-insights:latest
+
