@@ -75,7 +75,7 @@ func main() {
 }
 
 // ValidatePackageValue checks if the provided package value matches a subdirectory name within /mods.
-func ValidatePackageValue(cmd *cobra.Command, packageValue string) bool {
+func ValidatePackageValue(cmd *cobra.Command, packageValue string) {
 	// Validate the option
 	switch packageValue {
 	case "aws-finops", "aws-top-10", "aws-well-architected":
@@ -88,10 +88,7 @@ func ValidatePackageValue(cmd *cobra.Command, packageValue string) bool {
 
 func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 
-	if !ValidatePackageValue(cmd, flags.ModName) {
-		cmd.PrintErrln("Invalid package value provided. Allowed values are: aws-finops, aws-top-10, aws-well-architected")
-		return
-	}
+	ValidatePackageValue(cmd, flags.ModName)
 
 	err := stopTeraSkyLabContianer()
 	if err != nil {
@@ -187,10 +184,7 @@ func runReport(cmd *cobra.Command, args []string) {
 // create loadPackage cobra func
 func loadPackage(cmd *cobra.Command, args []string) {
 	packageValue := args[0]
-	if !ValidatePackageValue(cmd, packageValue) {
-		cmd.PrintErrln("Invalid package value provided. Allowed values are: aws-finops, aws-top-10, aws-well-architected")
-		return
-	}
+	ValidatePackageValue(cmd, packageValue)
 
 	//todo need to check if reload will requires Posgress restart as well
 	loadModDashbaord(packageValue)
