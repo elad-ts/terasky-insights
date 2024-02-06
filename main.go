@@ -97,7 +97,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	}
 
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
-		"--name terasky-insights --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/terasky-oss/terasky-insights:latest %s %s %s", flags.ProfileName,
+		"--name terasky-insights --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s %s", flags.ProfileName,
 		flags.ModName, flags.IamRole))
 }
 
