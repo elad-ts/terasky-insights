@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -76,34 +75,20 @@ func main() {
 }
 
 // ValidatePackageValue checks if the provided package value matches a subdirectory name within /mods.
-func ValidatePackageValue(packageValue string) bool {
-	modsDir := "./mods"
-	isValid := false
-
-	// Read the contents of the mods directory
-	entries, err := os.ReadDir(modsDir)
-	if err != nil {
-		// Handle error (e.g., mods directory not found)
-		return false
+func ValidatePackageValue(cmd *cobra.Command, packageValue string) bool {
+	// Validate the option
+	switch packageValue {
+	case "aws-finops", "aws-top-10", "aws-well-architected":
+		fmt.Printf("Option selected: %s\n", packageValue)
+	default:
+		fmt.Printf("Invalid option provided: %s. Allowed values are: aws-finops, aws-top-10, aws-well-architected\n", packageValue)
+		cmd.Usage() // Show usage if the option is invalid
 	}
-
-	// Check if any subdirectory matches the provided packageValue
-	for _, entry := range entries {
-		if entry.IsDir() {
-			dirName := entry.Name()
-			if dirName == packageValue {
-				isValid = true
-				break
-			}
-		}
-	}
-
-	return isValid
 }
 
 func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 
-	if !ValidatePackageValue(flags.ModName) {
+	if !ValidatePackageValue(cmd, flags.ModName) {
 		cmd.PrintErrln("Invalid package value provided. Allowed values are: aws-finops, aws-top-10, aws-well-architected")
 		return
 	}
@@ -202,7 +187,7 @@ func runReport(cmd *cobra.Command, args []string) {
 // create loadPackage cobra func
 func loadPackage(cmd *cobra.Command, args []string) {
 	packageValue := args[0]
-	if !ValidatePackageValue(packageValue) {
+	if !ValidatePackageValue(cmd, packageValue) {
 		cmd.PrintErrln("Invalid package value provided. Allowed values are: aws-finops, aws-top-10, aws-well-architected")
 		return
 	}
