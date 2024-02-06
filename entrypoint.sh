@@ -25,6 +25,8 @@ echo "Running IAM generate-credential-report"
 aws iam generate-credential-report --profile $profile_name
 
 export STEAMPIPE_DATABASE_START_TIMEOUT=300
+export AWS_PROFILE=$profile_name
+
 
 # Run Find AWS Organization accounts and setup aws plugin auth config
 if [ -n "$assume_role_name" ]; then
@@ -40,11 +42,9 @@ if [ -n "$assume_role_name" ]; then
     aws iam generate-credential-report --profile $profile_name --output text
   done
   echo "Assume role"
-else 
-  export AWS_PROFILE=$profile_name
 fi 
 
 # Sleep in background indefinitely  
-cd /mods/$mod && steampipe service start --dashboard
+cd /mods/$mod && steampipe service start --dashboard && echo "$mod" > /mods/active
 sleep infinity
 

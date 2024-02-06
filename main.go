@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -79,10 +80,9 @@ func ValidatePackageValue(cmd *cobra.Command, packageValue string) {
 	// Validate the option
 	switch packageValue {
 	case "aws-finops", "aws-top-10", "aws-well-architected":
-		fmt.Printf("Option selected: %s\n", packageValue)
+		// this option is valid, so do nothing
 	default:
-		fmt.Printf("Invalid option provided: %s. Allowed values are: aws-finops, aws-top-10, aws-well-architected\n", packageValue)
-		cmd.Usage() // Show usage if the option is invalid
+		log.Fatalf("Invalid option provided: %s. Allowed values are: aws-finops, aws-top-10, aws-well-architected\n", packageValue)
 	}
 }
 
@@ -107,8 +107,8 @@ func loadModDashbaord(modName string) {
 			"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
 				// "export AWS_PROFILE=%s "+
 				"export STEAMPIPE_DATABASE_START_TIMEOUT=300 && "+
-				"steampipe service stop && steampipe service start --dashboard' ",
-			modName,
+				"steampipe service stop && steampipe service start --dashboard' && echo '%s' > /mods/active ",
+			modName, modName,
 		),
 	)
 }
@@ -177,8 +177,13 @@ func stopContainer(cmd *cobra.Command, args []string) {
 }
 
 func runReport(cmd *cobra.Command, args []string) {
-	execCommand("exec terasky-insights /bin/sh -c 'cd /mods/aws-top-10 && steampipe check all --output csv > aws-top-10-report.csv'")
-	execCommand("cp terasky-insights:/mods/aws-top-10/aws-top-10-report.csv ./aws-top-10-report.csv")
+	contents, _ := os.ReadFile("/mod/active")
+	modName := strings.TrimSpace(string(contents))
+
+	execCommand(fmt.Sprintf("exec terasky-insights /bin/sh -c 'cd %s && "+
+		"steampipe check all --output csv > %s.csv'", modName, modName))
+
+	execCommand(fmt.Sprintf("cp terasky-insights:/mods/aws-top-10/%s.csv ./%s.csv", modName, modName))
 }
 
 // create loadPackage cobra func
