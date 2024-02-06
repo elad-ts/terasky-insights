@@ -1,1 +1,1 @@
-# terasky-insights
+# terasky-lab
