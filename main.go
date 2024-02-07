@@ -99,8 +99,10 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	}
 
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
-		"--name terasky-insights --pull --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
+		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
 		flags.IamRole))
+
+	loadModDashbaord(flags.ModName)
 }
 
 func loadModDashbaord(modName string) {
