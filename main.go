@@ -45,13 +45,13 @@ func initContainerEngine() {
 
 func main() {
 	// Initialize the container engine. This will panic if no engine is found.
+	// todo - add support for version command
 	initContainerEngine()
 
 	var rootCmd = &cobra.Command{
 		Use:   "terasky-insights",
 		Short: "Tool for TeraSky Lab Inspections",
 	}
-
 	runFlags := RunCommandFlags{}
 	runCmd := &cobra.Command{
 		Use:   "run",
@@ -97,20 +97,15 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	}
 
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
-		"--name terasky-insights --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s %s", flags.ProfileName,
-		flags.ModName, flags.IamRole))
+		"--name terasky-insights --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
+		flags.IamRole))
 }
 
 func loadModDashbaord(modName string) {
 	execCommand(
 		fmt.Sprintf(
 			"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
-				// "export AWS_PROFILE=%s "+
-				"export STEAMPIPE_DATABASE_START_TIMEOUT=300 && "+
-				"steampipe service stop && steampipe service start --dashboard' && echo '%s' > /mods/active ",
-			modName, modName,
-		),
-	)
+				"steampipe service stop && steampipe service start --dashboard' && echo '%s' > /mods/active ", modName, modName))
 }
 
 func stopTeraSkyLabContianer() error {
@@ -177,13 +172,13 @@ func stopContainer(cmd *cobra.Command, args []string) {
 }
 
 func runReport(cmd *cobra.Command, args []string) {
-	contents, _ := os.ReadFile("/mod/active")
+	contents, _ := os.ReadFile("/mods/active")
 	modName := strings.TrimSpace(string(contents))
 
 	execCommand(fmt.Sprintf("exec terasky-insights /bin/sh -c 'cd %s && "+
 		"steampipe check all --output csv > %s.csv'", modName, modName))
 
-	execCommand(fmt.Sprintf("cp terasky-insights:/mods/aws-top-10/%s.csv ./%s.csv", modName, modName))
+	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s/%s.csv ./%s.csv", modName, modName, modName))
 }
 
 // create loadPackage cobra func

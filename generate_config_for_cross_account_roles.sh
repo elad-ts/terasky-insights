@@ -47,17 +47,6 @@ if [ -z $SOURCE_PROFILE ] ; then
   fi
 fi
 
-# STEAMPIPE_INSTALL_DIR overrides the default steampipe directory of ~/.steampipe
-if [ -z $STEAMPIPE_INSTALL_DIR ] ; then
-  echo "STEAMPIPE_INSTALL_DIR not defined. Using the default."
-  export STEAMPIPE_INSTALL_DIR=~/.steampipe
-fi
-
-if [ ! -d $STEAMPIPE_INSTALL_DIR ] ; then
-  echo "STEAMPIPE_INSTALL_DIR: $STEAMPIPE_INSTALL_DIR doesn't exist. Creating it."
-  mkdir -p ${STEAMPIPE_INSTALL_DIR}/config/
-fi
-
 if [ -f $AWS_CONFIG_FILE ] ; then
   echo "$AWS_CONFIG_FILE exists. Aborting rather than overwriting a critical file."
   # exit 1

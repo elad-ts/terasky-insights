@@ -2,16 +2,10 @@
 set -Eeo pipefail
 
 profile_name=$1
-mod=$2
-assume_role_name=$3
+assume_role_name=$2
 
 if [ -z "$profile_name" ]; then
   echo "Profile name is required"
-  exit 1
-fi
-
-if [ -z "$mod" ]; then
-  echo "Mod name is required"
   exit 1
 fi
 
@@ -26,6 +20,17 @@ aws iam generate-credential-report --profile $profile_name
 
 export STEAMPIPE_DATABASE_START_TIMEOUT=300
 export AWS_PROFILE=$profile_name
+
+# STEAMPIPE_INSTALL_DIR overrides the default steampipe directory of ~/.steampipe
+if [ -z $STEAMPIPE_INSTALL_DIR ] ; then
+  echo "STEAMPIPE_INSTALL_DIR not defined. Using the default."
+  export STEAMPIPE_INSTALL_DIR=~/.steampipe
+fi
+
+if [ ! -d $STEAMPIPE_INSTALL_DIR ] ; then
+  echo "STEAMPIPE_INSTALL_DIR: $STEAMPIPE_INSTALL_DIR doesn't exist. Creating it."
+  mkdir -p ${STEAMPIPE_INSTALL_DIR}/config/
+fi
 
 
 # Run Find AWS Organization accounts and setup aws plugin auth config
@@ -42,9 +47,17 @@ if [ -n "$assume_role_name" ]; then
     aws iam generate-credential-report --profile $profile_name --output text
   done
   echo "Assume role"
-fi 
+else
+   # Write the content to config/aws.spc
+  cat <<EOF > config/aws.spc
+    connection "aws" {
+      plugin  = "aws"
+      regions = ["*"]
+      profile = "$profile_name"
+    }
+EOF
+fi
 
 # Sleep in background indefinitely  
-cd /mods/$mod && steampipe service start --dashboard && echo "$mod" > /mods/active
 sleep infinity
 
