@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -102,6 +103,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
 		flags.IamRole))
 
+	time.Sleep(10 * time.Second)
 	loadModDashbaord(flags.ModName)
 }
 
