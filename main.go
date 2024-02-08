@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -178,8 +177,7 @@ func stopContainer(cmd *cobra.Command, args []string) {
 }
 
 func runReport(cmd *cobra.Command, args []string) {
-	contents, _ := os.ReadFile("/mods/active")
-	modName := strings.TrimSpace(string(contents))
+	modName := execCommand("cat /mods/active")
 
 	execCommand(fmt.Sprintf("exec terasky-insights /bin/sh -c 'cd %s && "+
 		"steampipe check all --output csv > %s.csv'", modName, modName))
