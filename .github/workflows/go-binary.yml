@@ -73,15 +73,15 @@ jobs:
       - name: Build Artificats
         id: build_binary
         run: |
-          env GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags="-X 'main.version=${{ env.NEW_VERSION }}'" -o terasky-lab-${{ matrix.platform }}${{ matrix.extension }}
+          env GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags="-X 'main.version=${{ env.NEW_VERSION }}'" -o terasky-insights-${{ matrix.platform }}${{ matrix.extension }}
         working-directory: ./ 
 
       - name: Upload binary to artifacts
         id: upload_binary_artificats
         uses: actions/upload-artifact@v4
         with:
-          name: terasky-lab-${{ matrix.platform }}${{ matrix.extension }}
-          path: terasky-lab-${{ matrix.platform }}${{ matrix.extension }}
+          name: terasky-insights-${{ matrix.platform }}${{ matrix.extension }}
+          path: terasky-insights-${{ matrix.platform }}${{ matrix.extension }}
 
   release:
     name: Create and Upload Release
@@ -112,8 +112,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/terasky-lab/terasky-lab/binaries/terasky-lab-linux-amd64/terasky-lab-linux-amd64
-          asset_name: terasky-lab-linux-amd64 
+          asset_path: /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-amd64/terasky-insights-linux-amd64
+          asset_name: terasky-insights-linux-amd64 
           asset_content_type: application/octet-stream
           
       - name: upload linux arm64 artifact
@@ -122,8 +122,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/terasky-lab/terasky-lab/binaries/terasky-lab-linux-arm64/terasky-lab-linux-arm64
-          asset_name: terasky-lab-linux-arm64 
+          asset_path: /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-arm64/terasky-insights-linux-arm64
+          asset_name: terasky-insights-linux-arm64 
           asset_content_type: application/octet-stream
       - name: upload darwin amd64 artifact
         uses: actions/upload-release-asset@v1
@@ -131,8 +131,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/terasky-lab/terasky-lab/binaries/terasky-lab-darwin-amd64/terasky-lab-darwin-amd64
-          asset_name: terasky-lab-darwin-amd64 
+          asset_path: /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-darwin-amd64/terasky-insights-darwin-amd64
+          asset_name: terasky-insights-darwin-amd64 
           asset_content_type: application/octet-stream
       - name: upload darwin arm64 artifact
         uses: actions/upload-release-asset@v1
@@ -140,8 +140,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/terasky-lab/terasky-lab/binaries/terasky-lab-darwin-arm64/terasky-lab-darwin-arm64
-          asset_name: terasky-lab-darwin-arm64 
+          asset_path: /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-darwin-arm64/terasky-insights-darwin-arm64
+          asset_name: terasky-insights-darwin-arm64 
           asset_content_type: application/octet-stream
       - name: upload windows amd64 artifact
         uses: actions/upload-release-asset@v1
@@ -149,6 +149,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /home/runner/work/terasky-lab/terasky-lab/binaries/terasky-lab-windows-amd64.exe/terasky-lab-windows-amd64.exe 
-          asset_name: terasky-lab-windows-amd64 
+          asset_path: /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-windows-amd64.exe/terasky-insights-windows-amd64.exe 
+          asset_name: terasky-insights-windows-amd64 
           asset_content_type: application/octet-stream
