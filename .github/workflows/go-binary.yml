@@ -48,7 +48,7 @@ jobs:
         with:
           go-version: '1.21.6' 
 
-         # Get the latest release version
+       # Get the latest release version
       - name: Get Latest Release
         id: latest_release
         uses: actions/github-script@v5
@@ -115,6 +115,7 @@ jobs:
           asset_path: /home/runner/work/terasky-lab/terasky-lab/binaries/terasky-lab-linux-amd64/terasky-lab-linux-amd64
           asset_name: terasky-lab-linux-amd64 
           asset_content_type: application/octet-stream
+          
       - name: upload linux arm64 artifact
         uses: actions/upload-release-asset@v1
         env:

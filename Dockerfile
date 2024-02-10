@@ -12,10 +12,13 @@ RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/
 # updates and installs - 'wget' for downloading steampipe, 'less' for paging in 'steampipe query' interactive mode
 RUN apt-get update -y && apt-get install -y curl wget unzip vim less && rm -rf /var/lib/apt/lists/*
 
-#Install AWS cli
-#add support x86_64 and aarch64
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
-
+# Install AWS CLI with support for x86_64 and aarch64
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"; \
+    else \
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"; \
+    fi && \
+    unzip awscliv2.zip && ./aws/install
 
 # # download the release as given in TARGETVERSION and TARGETARCH
 RUN echo \
