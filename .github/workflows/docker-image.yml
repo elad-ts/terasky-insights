@@ -21,13 +21,23 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     # Build the Docker image with specific build arguments
-    - name: Build the Docker image
+    - name: Build the linux/amd64 Docker image
       run: >
         docker build
         --progress=plain
         --platform=linux/amd64
         --build-arg TARGETVERSION=v0.21.3
         --build-arg TARGETARCH=amd64
+        . -t ghcr.io/${{ github.actor }}/terasky-insights:latest
+
+    # Build the Docker image with specific build arguments
+    - name: Build darwin/arm64 Docker image
+      run: >
+        docker build
+        --progress=plain
+        --platform=darwin/arm64
+        --build-arg TARGETVERSION=v0.21.3
+        --build-arg TARGETARCH=arm64
         . -t ghcr.io/${{ github.actor }}/terasky-insights:latest
 
     # Push the Docker image to GitHub Container Registry

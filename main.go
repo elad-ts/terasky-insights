@@ -19,11 +19,26 @@ type RunCommandFlags struct {
 	ModName     string
 }
 
+type Spinner struct {
+	active    bool
+	stopChan  chan struct{}
+	character []string
+}
+
+func NewSpinner() *Spinner {
+	return &Spinner{
+		character: []string{"|", "/", "-", "\\"},
+		stopChan:  make(chan struct{}, 1),
+	}
+}
+
 // containerEngine is a package-level variable storing the name of the detected container engine.
 var containerEngine string
 
 // once ensures that the container engine detection is performed only once.
 var once sync.Once
+
+var version = "dev" // default version, overridden at build time
 
 // initContainerEngine detects the container engine and stores its name in containerEngine.
 // It panics if no container engine is found.
@@ -69,8 +84,8 @@ func main() {
 
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(stopCmd)
-	rootCmd.AddCommand(reportCmd)
 	rootCmd.AddCommand(packageCmd)
+	rootCmd.AddCommand(versionCmd)
 
 	cobra.CheckErr(rootCmd.Execute())
 }
@@ -87,10 +102,12 @@ func ValidatePackageValue(cmd *cobra.Command, packageValue string) {
 }
 
 func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
-
-	// todo check if sts token expired and notify the user
-
 	ValidatePackageValue(cmd, flags.ModName)
+
+	spinner := NewSpinner()
+	spinner.Start()
+
+	defer spinner.Stop()
 
 	err := stopTeraSkyLabContianer()
 	if err != nil {
@@ -102,6 +119,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
 		flags.IamRole))
 
+	// todo - fix ugly hack to wait for container to start
 	time.Sleep(10 * time.Second)
 	loadModDashbaord(flags.ModName)
 }
@@ -110,7 +128,12 @@ func loadModDashbaord(modName string) {
 	execCommand(
 		fmt.Sprintf(
 			"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
-				"steampipe service stop && steampipe service start --dashboard' && echo '%s' > /mods/active ", modName, modName))
+				"steampipe service stop && steampipe service start --dashboard'", modName))
+
+	execCommand(fmt.Sprintf("exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
+		"steampipe check all --output csv > /mods/%s.csv ; exit 0'", modName, modName))
+
+	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s.csv ./%s.csv", modName, modName))
 }
 
 func stopTeraSkyLabContianer() error {
@@ -128,13 +151,6 @@ var stopCmd = &cobra.Command{
 	Run:   stopContainer,
 }
 
-var reportCmd = &cobra.Command{
-	Use:   "report",
-	Short: "Run a report",
-	Args:  cobra.ExactArgs(0),
-	Run:   runReport,
-}
-
 var packageCmd = &cobra.Command{
 	Use:   "package [package_name]",
 	Short: "Load a package",
@@ -142,11 +158,16 @@ var packageCmd = &cobra.Command{
 	Run:   loadPackage,
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "version info",
+	Args:  cobra.ExactArgs(0),
+	Run:   getVersionInfo,
+}
+
 // execCommand executes a single command using the specified runtime.
 // The `containerEngine` and `command` are parameters to this function.
 func execCommand(command string) string {
-	fmt.Println("Executing command:", command)
-
 	// Determine the shell and shell option based on the operating system.
 	var shell, shellOption string
 	if runtime.GOOS == "windows" {
@@ -164,11 +185,11 @@ func execCommand(command string) string {
 	cmdOutput, err := cmd.CombinedOutput()
 	output := strings.TrimSpace(string(cmdOutput))
 	if err != nil {
-		// Log the error and exit the program
-		log.Fatalf("Error executing command '%s': %v\nOutput: %s", command, err, output)
+		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
+		containerLogs, _ := containerLogsCmd.CombinedOutput()
+		log.Fatalf("container logs %s", string(containerLogs))
 	}
 
-	fmt.Printf("Command '%s' executed successfully.\nOutput: %s\n", command, output)
 	return output
 }
 
@@ -176,20 +197,33 @@ func stopContainer(cmd *cobra.Command, args []string) {
 	stopTeraSkyLabContianer()
 }
 
-func runReport(cmd *cobra.Command, args []string) {
-	modName := execCommand("cat /mods/active")
-
-	execCommand(fmt.Sprintf("exec terasky-insights /bin/sh -c 'cd %s && "+
-		"steampipe check all --output csv > %s.csv'", modName, modName))
-
-	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s/%s.csv ./%s.csv", modName, modName, modName))
-}
-
 // create loadPackage cobra func
 func loadPackage(cmd *cobra.Command, args []string) {
 	packageValue := args[0]
 	ValidatePackageValue(cmd, packageValue)
-
-	//todo need to check if reload will requires Posgress restart as well
 	loadModDashbaord(packageValue)
+}
+
+func getVersionInfo(cmd *cobra.Command, args []string) {
+	fmt.Printf("Version: %s\n", version)
+}
+
+func (s *Spinner) Start() {
+	s.active = true
+	go func() {
+		for {
+			for _, c := range s.character {
+				if !s.active {
+					return
+				}
+				fmt.Printf("\r%s Please wait...", c)
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
+}
+
+func (s *Spinner) Stop() {
+	s.active = false
+	s.stopChan <- struct{}{}
 }

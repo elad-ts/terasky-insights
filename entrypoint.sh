@@ -49,7 +49,7 @@ if [ -n "$assume_role_name" ]; then
   echo "Assume role"
 else
    # Write the content to config/aws.spc
-  cat <<EOF > config/aws.spc
+  cat <<EOF > $STEAMPIPE_INSTALL_DIR/config/aws.spc
     connection "aws" {
       plugin  = "aws"
       regions = ["*"]

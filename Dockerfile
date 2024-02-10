@@ -72,8 +72,6 @@ RUN for dir in /mods/*/; do cd "$dir" && steampipe mod install && cd -; done
 COPY dashboard /home/steampipe/.steampipe/dashboard/assets
 COPY generate_config_for_cross_account_roles.sh /home/steampipe
 
-RUN touch /mods/active
-
 # # expose postgres service default port
 EXPOSE 9193
 
@@ -81,6 +79,5 @@ EXPOSE 9193
 EXPOSE 9194
 
 COPY entrypoint.sh /usr/local/bin
-
 
 ENTRYPOINT [ "entrypoint.sh" ]
