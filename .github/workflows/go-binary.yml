@@ -74,7 +74,7 @@ jobs:
         id: build_binary
         run: |
           env GOOS=${{ matrix.GOOS }} GOARCH=${{ matrix.GOARCH }} go build -ldflags="-X 'main.version=${{ env.NEW_VERSION }}'" -o terasky-lab-${{ matrix.platform }}${{ matrix.extension }}
-          working-directory: ./ 
+        working-directory: ./ 
 
       - name: Upload binary to artifacts
         id: upload_binary_artificats
