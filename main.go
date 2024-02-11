@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -57,7 +58,7 @@ func main() {
 
 	var rootCmd = &cobra.Command{
 		Use:   "terasky-insights",
-		Short: "Tool for TeraSky Lab Inspections",
+		Short: "Tool for TeraSky insights Inspections",
 	}
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug mode")
 
@@ -99,12 +100,13 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 
 	defer spinner.Stop()
 
-	err := stopTeraSkyLabContianer()
+	err := stopTeraSkyInsightsContianer()
 	if err != nil {
 		fmt.Printf("Error stopping existing container: %v\n", err)
 		return
 	}
-	// todo - use ENV CRED if needed
+	// todo support IAM Access Role + Env variable to get AWS credentials
+	fmt.Println("Downloading Image")
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
 		flags.IamRole))
@@ -115,6 +117,8 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 }
 
 func loadModDashbaord(modName string) {
+	fmt.Println("Run Inspection")
+
 	execCommand(
 		fmt.Sprintf(
 			"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
@@ -124,9 +128,13 @@ func loadModDashbaord(modName string) {
 		"steampipe check all --output csv > /mods/%s.csv ; exit 0'", modName, modName))
 
 	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s.csv ./%s.csv", modName, modName))
+
+	dir, _ := os.Getwd()
+	fmt.Printf("report export at %s/%s.csv\n", dir, modName)
+	fmt.Println("report details at http://localhost:9194")
 }
 
-func stopTeraSkyLabContianer() error {
+func stopTeraSkyInsightsContianer() error {
 	containerId := strings.TrimSpace(execCommand("ps -a -q --filter name=terasky-insights"))
 	if containerId != "" {
 		execCommand(fmt.Sprintf("rm -f -v %s", strings.TrimSpace(containerId)))
@@ -193,11 +201,16 @@ func execCommand(command string) string {
 }
 
 func stopContainer(cmd *cobra.Command, args []string) {
-	stopTeraSkyLabContianer()
+	stopTeraSkyInsightsContianer()
 }
 
 // create loadPackage cobra func
 func loadPackage(cmd *cobra.Command, args []string) {
+	spinner := NewSpinner()
+	spinner.Start()
+
+	defer spinner.Stop()
+
 	packageValue := args[0]
 	ValidatePackageValue(cmd, packageValue)
 	loadModDashbaord(packageValue)
