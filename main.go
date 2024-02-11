@@ -12,7 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RunCommandFlags holds the flags for the run command
+// Global flags
+var (
+	debug           bool
+	version         = "dev" // default version, overridden at build time
+	containerEngine string
+	once            sync.Once
+)
+
 type RunCommandFlags struct {
 	ProfileName string
 	IamRole     string
@@ -32,60 +39,43 @@ func NewSpinner() *Spinner {
 	}
 }
 
-// containerEngine is a package-level variable storing the name of the detected container engine.
-var containerEngine string
-
-// once ensures that the container engine detection is performed only once.
-var once sync.Once
-
-var version = "dev" // default version, overridden at build time
-
-// initContainerEngine detects the container engine and stores its name in containerEngine.
-// It panics if no container engine is found.
 func initContainerEngine() {
 	once.Do(func() {
 		engines := []string{"docker", "podman", "containerd", "runc"}
-
 		for _, engine := range engines {
 			if _, err := exec.LookPath(engine); err == nil {
 				containerEngine = engine
 				return
 			}
 		}
-
-		// Panic if no container engine is found.
 		panic("no container engine detected")
 	})
 }
 
 func main() {
-	// Initialize the container engine. This will panic if no engine is found.
-	// todo - add support for version command
 	initContainerEngine()
 
 	var rootCmd = &cobra.Command{
 		Use:   "terasky-insights",
 		Short: "Tool for TeraSky Lab Inspections",
 	}
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug mode")
+
 	runFlags := RunCommandFlags{}
 	runCmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run a container with AWS profile , IAM role and Inspection Package",
+		Short: "Run a container with AWS profile, IAM role and Inspection Package",
 		Run:   func(cmd *cobra.Command, args []string) { runContainer(cmd, args, runFlags) },
 	}
 
-	// Binding flags to the run command
+	// Add flags
 	runCmd.Flags().StringVar(&runFlags.ProfileName, "profile", "", "AWS local profile name")
 	runCmd.Flags().StringVar(&runFlags.ModName, "package", "", "Inspection Package to use")
 	runCmd.Flags().StringVar(&runFlags.IamRole, "role", "", "IAM role to use")
-
 	runCmd.MarkFlagRequired("profile")
 	runCmd.MarkFlagRequired("package")
 
-	rootCmd.AddCommand(runCmd)
-	rootCmd.AddCommand(stopCmd)
-	rootCmd.AddCommand(packageCmd)
-	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(runCmd, stopCmd, packageCmd, versionCmd)
 
 	cobra.CheckErr(rootCmd.Execute())
 }
@@ -114,7 +104,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 		fmt.Printf("Error stopping existing container: %v\n", err)
 		return
 	}
-
+	// todo - use ENV CRED if needed
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
 		flags.IamRole))
@@ -180,10 +170,19 @@ func execCommand(command string) string {
 
 	// Construct the command safely, without concatenating strings directly.
 	fullCommand := fmt.Sprintf("%s %s", containerEngine, command)
-	cmd := exec.Command(shell, shellOption, fullCommand)
 
+	if debug {
+		fmt.Printf("Executing command: %s\n", fullCommand)
+	}
+
+	cmd := exec.Command(shell, shellOption, fullCommand)
 	cmdOutput, err := cmd.CombinedOutput()
 	output := strings.TrimSpace(string(cmdOutput))
+
+	if debug {
+		fmt.Printf("Command output: %s\n", output)
+	}
+
 	if err != nil {
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, _ := containerLogsCmd.CombinedOutput()
