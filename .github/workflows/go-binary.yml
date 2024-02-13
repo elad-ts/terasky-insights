@@ -95,6 +95,16 @@ jobs:
         with:
           path: binaries/
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Upload artifacts to S3
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-amd64/terasky-insights-linux-amd64 s3://terasky-insights/terasky-insights-linux-amd64 --acl public-read
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
