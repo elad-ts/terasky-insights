@@ -58,20 +58,20 @@ func main() {
 
 	var rootCmd = &cobra.Command{
 		Use:   "terasky-insights",
-		Short: "Tool for TeraSky insights Inspections",
+		Short: "Tool for TeraSky insights Assessments",
 	}
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug mode")
 
 	runFlags := RunCommandFlags{}
 	runCmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run a container with AWS profile, IAM role and Inspection Package",
+		Short: "Run a container with AWS profile, IAM role and Assessment Package",
 		Run:   func(cmd *cobra.Command, args []string) { runContainer(cmd, args, runFlags) },
 	}
 
 	// Add flags
 	runCmd.Flags().StringVar(&runFlags.ProfileName, "profile", "", "AWS local profile name")
-	runCmd.Flags().StringVar(&runFlags.ModName, "package", "", "Inspection Package to use")
+	runCmd.Flags().StringVar(&runFlags.ModName, "package", "", "Assessment Package to use")
 	runCmd.Flags().StringVar(&runFlags.IamRole, "role", "", "IAM role to use")
 	runCmd.MarkFlagRequired("profile")
 	runCmd.MarkFlagRequired("package")
@@ -100,11 +100,8 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 
 	defer spinner.Stop()
 
-	err := stopTeraSkyInsightsContianer()
-	if err != nil {
-		fmt.Printf("Error stopping existing container: %v\n", err)
-		return
-	}
+	stopTeraSkyInsightsContianer()
+
 	// todo support IAM Access Role + Env variable to get AWS credentials
 	fmt.Println("Downloading Image")
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
@@ -117,7 +114,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 }
 
 func loadModDashbaord(modName string) {
-	fmt.Println("Run Inspection")
+	fmt.Println("Run Assessment")
 
 	execCommand(
 		fmt.Sprintf(
@@ -130,16 +127,16 @@ func loadModDashbaord(modName string) {
 	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s.csv ./%s.csv", modName, modName))
 
 	dir, _ := os.Getwd()
-	fmt.Printf("report export at %s/%s.csv\n", dir, modName)
-	fmt.Println("report details at http://localhost:9194")
+	fmt.Printf("Report exported:  %s/%s.csv\n", dir, modName)
+	fmt.Println("Report dashboar:  http://localhost:9194")
 }
 
-func stopTeraSkyInsightsContianer() error {
+func stopTeraSkyInsightsContianer() {
 	containerId := strings.TrimSpace(execCommand("ps -a -q --filter name=terasky-insights"))
 	if containerId != "" {
 		execCommand(fmt.Sprintf("rm -f -v %s", strings.TrimSpace(containerId)))
 	}
-	return nil
+	fmt.Println("Stopping and Deleting terasky-insights")
 }
 
 var stopCmd = &cobra.Command{
