@@ -127,8 +127,8 @@ func loadModDashbaord(modName string) {
 	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s.csv ./%s.csv", modName, modName))
 
 	dir, _ := os.Getwd()
-	fmt.Printf("Report exported:  %s/%s.csv\n", dir, modName)
-	fmt.Println("Report dashboar:  http://localhost:9194")
+	fmt.Printf("Report Exported:  %s/%s.csv\n", dir, modName)
+	fmt.Println("Report Dashboard:  http://localhost:9194")
 }
 
 func stopTeraSkyInsightsContianer() {
@@ -148,7 +148,7 @@ var stopCmd = &cobra.Command{
 
 var packageCmd = &cobra.Command{
 	Use:   "package [package_name]",
-	Short: "Load a package",
+	Short: "Load a package ,Allowed values are: aws-finops, aws-top-10, aws-well-architected",
 	Args:  cobra.MinimumNArgs(1),
 	Run:   loadPackage,
 }
