@@ -114,7 +114,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 }
 
 func loadModDashbaord(modName string) {
-	fmt.Println("Run Assessment")
+	fmt.Println("Running Assessment")
 
 	execCommand(
 		fmt.Sprintf(
@@ -190,7 +190,10 @@ func execCommand(command string) string {
 
 	if err != nil {
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
-		containerLogs, _ := containerLogsCmd.CombinedOutput()
+		containerLogs, err := containerLogsCmd.CombinedOutput()
+		if err != nil {
+			log.Fatal("Please first run terasky-insights run command")
+		}
 		log.Fatalf("container logs %s", string(containerLogs))
 	}
 
