@@ -192,7 +192,7 @@ func execCommand(command string) string {
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, err := containerLogsCmd.CombinedOutput()
 		if err != nil {
-			log.Fatal("Please first run terasky-insights run command")
+			log.Fatal("Please first start container by initiating run command")
 		}
 		log.Fatalf("container logs %s", string(containerLogs))
 	}
