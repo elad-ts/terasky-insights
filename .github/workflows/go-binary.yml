@@ -166,7 +166,7 @@ jobs:
 
 
       - name: upload linux arm64 artifact to s3 distribution
-        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-amd64/terasky-insights-linux-arm64 s3://terasky-insights/terasky-insights-linux-arm64 --acl public-read
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-arm64/terasky-insights-linux-arm64 s3://terasky-insights/terasky-insights-linux-arm64 --acl public-read
 
 
       - name: upload darwin amd64 artifact to s3 distribution
@@ -174,7 +174,7 @@ jobs:
 
 
       - name: upload darwin arm64 artifact to s3 distribution
-        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-darwin-arm64 s3://terasky-insights/terasky-insights-darwin-arm64 --acl public-read
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-darwin-arm64/terasky-insights-darwin-arm64  s3://terasky-insights/terasky-insights-darwin-arm64 --acl public-read
 
 
       - name: upload windows amd64 artifact to s3 distribution
