@@ -102,9 +102,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
-      - name: Upload artifacts to S3
-        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-amd64/terasky-insights-linux-amd64 s3://terasky-insights/terasky-insights-linux-amd64 --acl public-read
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -162,3 +159,24 @@ jobs:
           asset_path: /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-windows-amd64.exe/terasky-insights-windows-amd64.exe 
           asset_name: terasky-insights-windows-amd64 
           asset_content_type: application/octet-stream
+
+
+      - name: upload linux amd64 artifact to s3 distribution
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-amd64/terasky-insights-linux-amd64 s3://terasky-insights/terasky-insights-linux-amd64 --acl public-read
+
+
+      - name: upload linux arm64 artifact to s3 distribution
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-linux-amd64/terasky-insights-linux-arm64 s3://terasky-insights/terasky-insights-linux-arm64 --acl public-read
+
+
+      - name: upload darwin amd64 artifact to s3 distribution
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-darwin-amd64/terasky-insights-darwin-amd64  s3://terasky-insights/terasky-insights-darwin-amd64 --acl public-read
+
+
+      - name: upload darwin arm64 artifact to s3 distribution
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-darwin-arm64 s3://terasky-insights/terasky-insights-darwin-arm64 --acl public-read
+
+
+      - name: upload windows amd64 artifact to s3 distribution
+        run: aws s3 cp /home/runner/work/terasky-insights/terasky-insights/binaries/terasky-insights-windows-amd64.exe/terasky-insights-windows-amd64.exe s3://terasky-insights/terasky-insights-windows-amd64.exe --acl public-read
+
