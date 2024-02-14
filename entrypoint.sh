@@ -59,5 +59,5 @@ EOF
 fi
 
 # Sleep in background indefinitely  
-sleep infinity
+touch /tmp/ready && sleep infinity
 

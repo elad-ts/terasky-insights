@@ -102,14 +102,19 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 
 	stopTeraSkyInsightsContianer()
 
-	// todo support IAM Access Role + Env variable to get AWS credentials
+	// todo support env variable to get AWS credentials
 	fmt.Println("Downloading Image")
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
 		flags.IamRole))
 
-	// todo - fix ugly hack to wait for container to start
-	time.Sleep(10 * time.Second)
+	// Wait for container readiness
+	ready := waitForContainerReadiness()
+	if !ready {
+		fmt.Println("Container did not become ready in time")
+		return
+	}
+
 	loadModDashbaord(flags.ModName)
 }
 
@@ -238,4 +243,21 @@ func (s *Spinner) Start() {
 func (s *Spinner) Stop() {
 	s.active = false
 	s.stopChan <- struct{}{}
+}
+
+func waitForContainerReadiness() bool {
+	maxAttempts := 30
+	attempt := 0
+
+	for attempt < maxAttempts {
+		// Use a shell to check if /tmp/ready exists inside the container
+		results := execCommand("exec terasky-insights /bin/sh -c 'test -f /tmp/ready && echo 1 || echo 0'")
+		if results == "1" {
+			return true
+		}
+		time.Sleep(2 * time.Second) // wait for 2 seconds before retrying
+		attempt++
+	}
+
+	return false
 }
