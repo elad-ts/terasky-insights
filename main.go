@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/user"
 	"runtime"
 	"strings"
 	"sync"
@@ -102,10 +103,19 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 
 	stopTeraSkyInsightsContianer()
 
+	// Get the current user's home directory
+	currentUser, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	homeDir := currentUser.HomeDir
+
 	// todo support env variable to get AWS credentials
 	fmt.Println("Downloading Image")
-	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v ~/.aws:/tmp/aws:ro "+
-		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s", flags.ProfileName,
+	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v %s/.aws:/tmp/aws:ro "+
+		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s",
+		homeDir,
+		flags.ProfileName,
 		flags.IamRole))
 
 	// Wait for container readiness
