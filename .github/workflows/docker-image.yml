@@ -32,6 +32,7 @@ jobs:
       with:
         context: .
         push: true
+        provenance: false 
         tags: ghcr.io/${{ github.actor }}/terasky-insights:latest
         build-args: |
           TARGETVERSION=v0.21.3
@@ -44,8 +45,28 @@ jobs:
       with:
         context: .
         push: true
+        provenance: false
         tags: ghcr.io/${{ github.actor }}/terasky-insights:latest
         build-args: |
           TARGETVERSION=v0.21.3
           TARGETARCH=arm64
         platforms: linux/arm64
+
+    - name: Create and push multi-arch manifest
+      run: |
+        # Create a new manifest list
+        docker manifest create ghcr.io/${{ github.actor }}/terasky-insights:latest \
+          --amend ghcr.io/${{ github.actor }}/terasky-insights:latest-amd64 \
+          --amend ghcr.io/${{ github.actor }}/terasky-insights:latest-arm64
+        
+        # Annotate each manifest for its specific architecture
+        docker manifest annotate ghcr.io/${{ github.actor }}/terasky-insights:latest \
+          ghcr.io/${{ github.actor }}/terasky-insights:latest-amd64 --os linux --arch amd64
+        docker manifest annotate ghcr.io/${{ github.actor }}/terasky-insights:latest \
+          ghcr.io/${{ github.actor }}/terasky-insights:latest-arm64 --os linux --arch arm64
+        
+        # Push the manifest list to the registry
+        docker manifest push ghcr.io/${{ github.actor }}/terasky-insights:latest
+      env:
+        DOCKER_CLI_EXPERIMENTAL: enabled
+  
