@@ -106,7 +106,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	// Get the current user's home directory
 	currentUser, err := user.Current()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	homeDir := currentUser.HomeDir
 
