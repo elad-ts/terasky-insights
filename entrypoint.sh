@@ -14,8 +14,6 @@ chown steampipe:0 /home/steampipe/.steampipe/db/14.2.0/data/
 echo "Current user: $(id)"
 echo "Environment variables:"
 env
-echo "Checking /tmp/aws availability..."
-ls -la /tmp/
 
 # Copy temp ro .aws cred
 cp -r /tmp/aws ~/.aws

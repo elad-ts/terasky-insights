@@ -111,7 +111,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	homeDir := currentUser.HomeDir
 
 	// todo support env variable to get AWS credentials
-	fmt.Println("Downloading Image")
+	fmt.Println("Downloading image and run ")
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v %s/.aws:/tmp/aws:ro "+
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s",
 		homeDir,
@@ -131,10 +131,11 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 func loadModDashbaord(modName string) {
 	fmt.Println("Running Assessment")
 
-	execCommand(
-		fmt.Sprintf(
-			"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
-				"steampipe service stop && steampipe service start --dashboard'", modName))
+	execCommand(fmt.Sprintf(
+		"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
+			"steampipe service stop && "+
+			"find /tmp -type f -name \".s.PGSQL.*.lock\" -exec rm {} \\; && "+
+			"steampipe service start --dashboard'", modName))
 
 	execCommand(fmt.Sprintf("exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
 		"steampipe check all --output csv > /mods/%s.csv ; exit 0'", modName, modName))
