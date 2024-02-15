@@ -33,7 +33,7 @@ jobs:
         context: .
         push: true
         provenance: false 
-        tags: ghcr.io/${{ github.actor }}/terasky-insights:latest
+        tags: ghcr.io/${{ github.actor }}/terasky-insights:latest-amd64
         build-args: |
           TARGETVERSION=v0.21.3
           TARGETARCH=amd64
@@ -46,7 +46,7 @@ jobs:
         context: .
         push: true
         provenance: false
-        tags: ghcr.io/${{ github.actor }}/terasky-insights:latest
+        tags: ghcr.io/${{ github.actor }}/terasky-insights:latest-arm64
         build-args: |
           TARGETVERSION=v0.21.3
           TARGETARCH=arm64
