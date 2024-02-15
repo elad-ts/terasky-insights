@@ -49,7 +49,7 @@ func initContainerEngine() {
 				return
 			}
 		}
-		panic("no container engine detected")
+		log.Fatal("no container engine detected")
 	})
 }
 
