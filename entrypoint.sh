@@ -21,7 +21,7 @@ chown steampipe:0 /home/steampipe/.aws
 
 # Copy the AWS credentials and config, then change their ownership to steampipe
 sudo cp -r /tmp/aws/* /home/steampipe/.aws/
-sudo chown -R steampipe:steampipe /home/steampipe/.aws
+sudo chown -R steampipe:0 /home/steampipe/.aws
 
 
 # Run Generate AWS IAM Users report
