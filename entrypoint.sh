@@ -9,14 +9,20 @@ if [ -z "$profile_name" ]; then
   exit 1
 fi
 
-chown steampipe:0 /home/steampipe/.steampipe/db/14.2.0/data/
-
 echo "Current user: $(id)"
 echo "Environment variables:"
 env
 
-# Copy temp ro .aws cred
-cp -r /tmp/aws ~/.aws
+chown steampipe:0 /home/steampipe/.steampipe/db/14.2.0/data/
+
+# Ensure ~/.aws exists and is owned by steampipe
+mkdir -p /home/steampipe/.aws
+chown steampipe:steampipe /home/steampipe/.aws
+
+# Copy the AWS credentials and config, then change their ownership to steampipe
+sudo cp -r /tmp/aws/* /home/steampipe/.aws/
+sudo chown -R steampipe:steampipe /home/steampipe/.aws
+
 
 # Run Generate AWS IAM Users report
 echo "Running IAM generate-credential-report"

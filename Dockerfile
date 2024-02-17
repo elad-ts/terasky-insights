@@ -6,6 +6,9 @@ ARG TARGETARCH
 # add a non-root 'steampipe' user
 RUN adduser --system --disabled-login --ingroup 0 --gecos "steampipe user" --shell /bin/false --uid 9193 steampipe
 
+# Allow steampipe user to run cp and chown without a password
+RUN echo 'steampipe ALL=(ALL) NOPASSWD: /bin/cp, /bin/chown' >> /etc/sudoers
+
 # install python3 
 RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*RUN
 
