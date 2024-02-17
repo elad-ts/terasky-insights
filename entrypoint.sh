@@ -17,7 +17,7 @@ chown steampipe:0 /home/steampipe/.steampipe/db/14.2.0/data/
 
 # Ensure ~/.aws exists and is owned by steampipe
 mkdir -p /home/steampipe/.aws
-chown steampipe:steampipe /home/steampipe/.aws
+chown steampipe:0 /home/steampipe/.aws
 
 # Copy the AWS credentials and config, then change their ownership to steampipe
 sudo cp -r /tmp/aws/* /home/steampipe/.aws/

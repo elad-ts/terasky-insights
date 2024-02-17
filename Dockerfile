@@ -3,6 +3,9 @@ FROM debian:bullseye-slim
 ARG TARGETVERSION
 ARG TARGETARCH
 
+# Install sudo
+RUN apt-get update && apt-get install -y sudo
+
 # add a non-root 'steampipe' user
 RUN adduser --system --disabled-login --ingroup 0 --gecos "steampipe user" --shell /bin/false --uid 9193 steampipe
 
