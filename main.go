@@ -129,11 +129,11 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 }
 
 func loadModDashbaord(modName string) {
-	fmt.Println("Running Assessment")
+	fmt.Println("Running Assessments")
 
 	execCommand(fmt.Sprintf(
 		"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
-			"steampipe service stop --force  && "+
+			"steampipe service stop --force && "+
 			"find /tmp -type f -name \".s.PGSQL.*.lock\" -exec rm {} \\; && "+
 			"steampipe service start --dashboard'", modName))
 
