@@ -52,7 +52,7 @@ func NewSpinner() *Spinner {
 	}
 }
 
-func init() {
+func Init() {
 
 	once.Do(func() {
 		currentUser, err := user.Current()
@@ -75,7 +75,7 @@ func init() {
 }
 
 func main() {
-	init()
+	Init()
 
 	var rootCmd = &cobra.Command{
 		Use:   "terasky-insights",
