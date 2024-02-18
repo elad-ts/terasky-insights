@@ -334,7 +334,7 @@ func modifySELinuxContextForAWS(mode OperationMode) error {
 		cmd = exec.Command("chcon", "-Rt", "container_file_t", "/root/.aws")
 		fmt.Println("Setting SELinux context for /root/.aws")
 	case RestoreMode:
-		cmd = exec.Command("restorecon", "-Rv", "/root/.aws")
+		cmd = exec.Command("restorecon", "-RvF", "/root/.aws")
 		fmt.Println("Restoring SELinux context for /root/.aws")
 	default:
 		return fmt.Errorf("invalid operation mode")
