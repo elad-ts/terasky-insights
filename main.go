@@ -208,7 +208,7 @@ func execCommand(command string) string {
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, err := containerLogsCmd.CombinedOutput()
 		if err != nil {
-			log.Fatal("Please make sure your OCI daeamon is running")
+			log.Fatal("Please make sure your container daeamon is running")
 		}
 		log.Fatalf("container logs %s", string(containerLogs))
 	}
