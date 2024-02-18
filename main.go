@@ -20,6 +20,7 @@ var (
 	debug           bool
 	version         = "dev" // default version, overridden at build time
 	containerEngine string
+	homeDir         string
 	once            sync.Once
 )
 
@@ -51,7 +52,16 @@ func NewSpinner() *Spinner {
 	}
 }
 
-func initContainerEngine() {
+func init() {
+
+	once.Do(func() {
+		currentUser, err := user.Current()
+		if err != nil {
+			log.Fatal(err)
+		}
+		homeDir = currentUser.HomeDir
+	})
+
 	once.Do(func() {
 		engines := []string{"docker", "podman", "containerd", "runc"}
 		for _, engine := range engines {
@@ -65,7 +75,7 @@ func initContainerEngine() {
 }
 
 func main() {
-	initContainerEngine()
+	init()
 
 	var rootCmd = &cobra.Command{
 		Use:   "terasky-insights",
@@ -117,13 +127,6 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	}
 
 	stopTeraSkyInsightsContianer()
-
-	// Get the current user's home directory
-	currentUser, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-	homeDir := currentUser.HomeDir
 
 	// todo support env variable to get AWS credentials
 	fmt.Println("Downloading image and run ")
@@ -301,41 +304,46 @@ func waitForContainerReadiness() bool {
 	return false
 }
 
-// isCentOS checks if the current system is CentOS.
-func isCentOS() (bool, error) {
+// isCentOSLike checks if the current system is CentOS.
+func isCentOSLike() (bool, error) {
 	// Attempt to read the contents of /etc/os-release to determine the OS
 	data, err := os.ReadFile("/etc/os-release")
 	if err != nil {
 		return false, fmt.Errorf("error reading os release info: %w", err)
 	}
 
-	// Check if the os-release content includes "centos"
-	return bytes.Contains(bytes.ToLower(data), []byte("centos")), nil
+	// Convert data to lowercase to make the search case-insensitive
+	dataLower := bytes.ToLower(data)
+
+	// Check if the os-release content includes "centos", "rhel", or "redhat"
+	isCentOSLike := bytes.Contains(dataLower, []byte("centos")) || bytes.Contains(dataLower, []byte("rhel")) || bytes.Contains(dataLower, []byte("redhat"))
+	return isCentOSLike, nil
 }
 
 // modifySELinuxContextForAWS sets or restores the SELinux context for the .aws directory based on the operation mode.
 func modifySELinuxContextForAWS(mode OperationMode) error {
-	// First, check if we're on CentOS
-	onCentOS, err := isCentOS()
+	// First, check if we're on a CentOS-like system
+	onCentOSLike, err := isCentOSLike()
 	if err != nil {
-		return err
+		return fmt.Errorf("error checking OS type: %w", err)
 	}
-
-	if !onCentOS {
-		fmt.Println("Not running on CentOS; this operation is not applicable.")
+	if !onCentOSLike {
+		fmt.Println("Not running on a CentOS-like system; this operation is not applicable.")
 		return nil
 	}
+
+	awsDir := homeDir + "/.aws"
 
 	var cmd *exec.Cmd
 
 	// Determine the operation based on the mode
 	switch mode {
 	case SetMode:
-		cmd = exec.Command("chcon", "-Rt", "container_file_t", "/root/.aws")
-		fmt.Println("Setting SELinux context for /root/.aws")
+		cmd = exec.Command("chcon", "-Rt", "container_file_t", awsDir)
+		fmt.Printf("Setting SELinux context for %s\n", awsDir)
 	case RestoreMode:
-		cmd = exec.Command("restorecon", "-RvF", "/root/.aws")
-		fmt.Println("Restoring SELinux context for /root/.aws")
+		cmd = exec.Command("restorecon", "-RvF", awsDir)
+		fmt.Printf("Restoring SELinux context for %s\n", awsDir)
 	default:
 		return fmt.Errorf("invalid operation mode")
 	}
@@ -343,9 +351,9 @@ func modifySELinuxContextForAWS(mode OperationMode) error {
 	// Execute the command
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("error during SELinux context modification: %w; output: %s", err, string(output))
+		return fmt.Errorf("error during SELinux context modification for %s: %w; output: %s", awsDir, err, string(output))
 	}
 
-	fmt.Println("SELinux context modification completed successfully for /root/.aws")
+	fmt.Printf("SELinux context modification completed successfully for %s\n", awsDir)
 	return nil
 }

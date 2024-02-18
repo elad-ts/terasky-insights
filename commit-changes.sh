@@ -6,10 +6,9 @@ if [ "$#" -ne 1 ]; then
 fi
 
 COMMIT_MESSAGE="$1"
-git add .
 
 if ! git diff-index --quiet HEAD --; then
-   
+    git add .
     git commit -m "$COMMIT_MESSAGE"
     git push origin main
     LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
