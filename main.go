@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -33,6 +34,15 @@ type Spinner struct {
 	stopChan  chan struct{}
 	character []string
 }
+
+type OperationMode int
+
+const (
+	// SetMode sets the SELinux context.
+	SetMode OperationMode = iota
+	// RestoreMode restores the default SELinux context.
+	RestoreMode
+)
 
 func NewSpinner() *Spinner {
 	return &Spinner{
@@ -100,6 +110,11 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	spinner.Start()
 
 	defer spinner.Stop()
+
+	err := modifySELinuxContextForAWS(SetMode)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
 	stopTeraSkyInsightsContianer()
 
@@ -227,6 +242,10 @@ func execCommandInternal(command string, retry bool) string {
 
 func stopContainer(cmd *cobra.Command, args []string) {
 	stopTeraSkyInsightsContianer()
+	err := modifySELinuxContextForAWS(RestoreMode)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 
 // create loadPackage cobra func
@@ -280,4 +299,53 @@ func waitForContainerReadiness() bool {
 	}
 
 	return false
+}
+
+// isCentOS checks if the current system is CentOS.
+func isCentOS() (bool, error) {
+	// Attempt to read the contents of /etc/os-release to determine the OS
+	data, err := os.ReadFile("/etc/os-release")
+	if err != nil {
+		return false, fmt.Errorf("error reading os release info: %w", err)
+	}
+
+	// Check if the os-release content includes "centos"
+	return bytes.Contains(bytes.ToLower(data), []byte("centos")), nil
+}
+
+// modifySELinuxContextForAWS sets or restores the SELinux context for the .aws directory based on the operation mode.
+func modifySELinuxContextForAWS(mode OperationMode) error {
+	// First, check if we're on CentOS
+	onCentOS, err := isCentOS()
+	if err != nil {
+		return err
+	}
+
+	if !onCentOS {
+		fmt.Println("Not running on CentOS; this operation is not applicable.")
+		return nil
+	}
+
+	var cmd *exec.Cmd
+
+	// Determine the operation based on the mode
+	switch mode {
+	case SetMode:
+		cmd = exec.Command("chcon", "-Rt", "container_file_t", "/root/.aws")
+		fmt.Println("Setting SELinux context for /root/.aws")
+	case RestoreMode:
+		cmd = exec.Command("restorecon", "-Rv", "/root/.aws")
+		fmt.Println("Restoring SELinux context for /root/.aws")
+	default:
+		return fmt.Errorf("invalid operation mode")
+	}
+
+	// Execute the command
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error during SELinux context modification: %w; output: %s", err, string(output))
+	}
+
+	fmt.Println("SELinux context modification completed successfully for /root/.aws")
+	return nil
 }
