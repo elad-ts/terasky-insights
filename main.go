@@ -131,7 +131,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 func loadModDashbaord(modName string) {
 	fmt.Println("Running Assessments")
 
-	execCommand(fmt.Sprintf(
+	execCommandWithRetry(fmt.Sprintf(
 		"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
 			"steampipe service stop --force && "+
 			"find /tmp -type f -name \".s.PGSQL.*.lock\" -exec rm {} \\; && "+
@@ -176,9 +176,17 @@ var versionCmd = &cobra.Command{
 	Run:   getVersionInfo,
 }
 
+func execCommand(command string) string {
+	return execCommandInternal(command, false)
+}
+
+func execCommandWithRetry(command string) string {
+	return execCommandInternal(command, true)
+}
+
 // execCommand executes a single command using the specified runtime.
 // The `containerEngine` and `command` are parameters to this function.
-func execCommand(command string) string {
+func execCommandInternal(command string, retry bool) string {
 	// Determine the shell and shell option based on the operating system.
 	var shell, shellOption string
 	if runtime.GOOS == "windows" {
@@ -205,6 +213,7 @@ func execCommand(command string) string {
 	}
 
 	if err != nil {
+		execCommandInternal(command, false)
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, err := containerLogsCmd.CombinedOutput()
 		if err != nil {
