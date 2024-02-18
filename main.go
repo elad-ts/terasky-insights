@@ -213,7 +213,9 @@ func execCommandInternal(command string, retry bool) string {
 	}
 
 	if err != nil {
-		execCommandInternal(command, false)
+		if retry {
+			execCommandInternal(command, false)
+		}
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, err := containerLogsCmd.CombinedOutput()
 		if err != nil {
