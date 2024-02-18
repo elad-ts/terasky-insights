@@ -133,7 +133,7 @@ func loadModDashbaord(modName string) {
 
 	execCommand(fmt.Sprintf(
 		"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
-			"steampipe service stop && "+
+			"steampipe service stop --force && "+
 			"find /tmp -type f -name \".s.PGSQL.*.lock\" -exec rm {} \\; && "+
 			"steampipe service start --dashboard'", modName))
 
@@ -208,7 +208,7 @@ func execCommand(command string) string {
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, err := containerLogsCmd.CombinedOutput()
 		if err != nil {
-			log.Fatal("Please first start container by initiating run command")
+			log.Fatal("Please make sure your OCI daeamon is running")
 		}
 		log.Fatalf("container logs %s", string(containerLogs))
 	}
