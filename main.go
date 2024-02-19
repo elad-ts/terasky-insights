@@ -144,7 +144,7 @@ func loadModDashbaord(modName string) {
 
 	dir, _ := os.Getwd()
 	fmt.Printf("Report Exported:  %s/%s.csv\n", dir, modName)
-	fmt.Println("Report Dashboard:  http://0.0.0.:9194")
+	fmt.Println("Report Dashboard:  http://0.0.0.0:9194")
 }
 
 func stopTeraSkyInsightsContianer() {
