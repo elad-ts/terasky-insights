@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -143,7 +144,7 @@ func loadModDashbaord(modName string) {
 
 	dir, _ := os.Getwd()
 	fmt.Printf("Report Exported:  %s/%s.csv\n", dir, modName)
-	fmt.Println("Report Dashboard:  http://0.0.0.0:9194")
+	fmt.Println("Report Dashboard:  http://0.0.0.:9194")
 }
 
 func stopTeraSkyInsightsContianer() {
@@ -183,7 +184,63 @@ func execCommandWithRetry(command string) string {
 	return execCommandInternal(command, true)
 }
 
-// execCommand executes a single command and returns the output along with any error encountered.
+func stopContainer(cmd *cobra.Command, args []string) {
+	stopTeraSkyInsightsContianer()
+}
+
+// create loadPackage cobra func
+func loadPackage(cmd *cobra.Command, args []string) {
+	spinner := NewSpinner()
+	spinner.Start()
+
+	defer spinner.Stop()
+
+	packageValue := args[0]
+	ValidatePackageValue(cmd, packageValue)
+	loadModDashbaord(packageValue)
+}
+
+func getVersionInfo(cmd *cobra.Command, args []string) {
+	fmt.Printf("Version: %s\n", version)
+}
+
+func (s *Spinner) Start() {
+	s.active = true
+	go func() {
+		for {
+			for _, c := range s.character {
+				if !s.active {
+					return
+				}
+				fmt.Printf("\r%s Please wait...", c)
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
+}
+
+func (s *Spinner) Stop() {
+	s.active = false
+	s.stopChan <- struct{}{}
+}
+
+func waitForContainerReadiness() bool {
+	maxAttempts := 30
+	attempt := 0
+
+	for attempt < maxAttempts {
+		// Use a shell to check if /tmp/ready exists inside the container
+		results := execCommand("exec terasky-insights /bin/sh -c 'test -f /tmp/ready && echo 1 || echo 0'")
+		if results == "1" {
+			return true
+		}
+		time.Sleep(2 * time.Second) // wait for 2 seconds before retrying
+		attempt++
+	}
+
+	return false
+}
+
 func execCommandOnce(command string) (string, error) {
 	// Determine the shell and shell option based on the operating system.
 	var shell, shellOption string
@@ -221,9 +278,9 @@ func execCommandInternal(command string, retry bool) string {
 	output, err := execCommandOnce(command)
 	if err != nil && retry {
 		// Retry once
-		output, err = execCommandOnce(command)
+		output, err := execCommandOnce(command)
 		if err == nil {
-			return "Retry successful"
+			return output
 		}
 		// Handle failure after retry
 		containerLogsCmd := fmt.Sprintf("%s logs terasky-insights", containerEngine)
@@ -255,6 +312,6 @@ func printChecklist() {
 	for i, item := range checklist {
 		fmt.Printf("✅ **Step %d**: %s\n", i+1, item)
 	}
-	log.Fatal("Unable to run ")
+	log.Fatal("Unable to run 	 ")
 
 }
