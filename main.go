@@ -129,7 +129,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 }
 
 func loadModDashbaord(modName string) {
-	fmt.Println("Running Assessments")
+	fmt.Println("Running Assessment")
 
 	execCommandWithRetry(fmt.Sprintf(
 		"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
@@ -218,10 +218,10 @@ func execCommandInternal(command string, retry bool) string {
 		}
 		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
 		containerLogs, err := containerLogsCmd.CombinedOutput()
-		if err != nil {
-			log.Fatal("Please make sure your container daeamon is running")
+		if err != nil && debug {
+			log.Fatalf("container logs %s", string(containerLogs))
 		}
-		log.Fatalf("container logs %s", string(containerLogs))
+		printChecklist()
 	}
 
 	return output
@@ -282,4 +282,22 @@ func waitForContainerReadiness() bool {
 	}
 
 	return false
+}
+
+// printChecklist prints a beautifully formatted checklist for the user.
+func printChecklist() {
+	checklist := []string{
+		"Ensure your container daemon is actively running.",
+		"Start Terasky Insights by executing 'run assessment'.",
+		"Verify AWS credentials are properly set in the current user's ~/.aws directory.",
+		"Make sure that your AWS profile is valid and not expired.",
+	}
+
+	// Print the checklist
+	log.Println("📋 **Checklist for Ensuring Proper Setup** 📋")
+	for i, item := range checklist {
+		fmt.Printf("✅ **Step %d**: %s\n", i+1, item)
+	}
+	log.Fatal("Unable to run  ")
+
 }
