@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -144,7 +143,7 @@ func loadModDashbaord(modName string) {
 
 	dir, _ := os.Getwd()
 	fmt.Printf("Report Exported:  %s/%s.csv\n", dir, modName)
-	fmt.Println("Report Dashboard:  http://localhost:9194")
+	fmt.Println("Report Dashboard:  http://0.0.0.0:9194")
 }
 
 func stopTeraSkyInsightsContianer() {
@@ -184,9 +183,8 @@ func execCommandWithRetry(command string) string {
 	return execCommandInternal(command, true)
 }
 
-// execCommand executes a single command using the specified runtime.
-// The `containerEngine` and `command` are parameters to this function.
-func execCommandInternal(command string, retry bool) string {
+// execCommand executes a single command and returns the output along with any error encountered.
+func execCommandOnce(command string) (string, error) {
 	// Determine the shell and shell option based on the operating system.
 	var shell, shellOption string
 	if runtime.GOOS == "windows" {
@@ -197,7 +195,7 @@ func execCommandInternal(command string, retry bool) string {
 		shellOption = "-c"
 	}
 
-	// Construct the command safely, without concatenating strings directly.
+	// Construct the command safely.
 	fullCommand := fmt.Sprintf("%s %s", containerEngine, command)
 
 	if debug {
@@ -210,78 +208,37 @@ func execCommandInternal(command string, retry bool) string {
 
 	if debug {
 		fmt.Printf("Command output: %s\n", output)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err)
+		}
 	}
 
-	if err != nil {
-		if retry {
-			execCommandInternal(command, false)
+	return output, err
+}
+
+// execCommandInternal wraps execCommand with retry logic.
+func execCommandInternal(command string, retry bool) string {
+	output, err := execCommandOnce(command)
+	if err != nil && retry {
+		// Retry once
+		output, err = execCommandOnce(command)
+		if err == nil {
+			return "Retry successful"
 		}
-		containerLogsCmd := exec.Command(shell, shellOption, fmt.Sprintf("%s %s", containerEngine, "logs terasky-insights"))
-		containerLogs, err := containerLogsCmd.CombinedOutput()
-		if err != nil && debug {
-			log.Fatalf("container logs %s", string(containerLogs))
+		// Handle failure after retry
+		containerLogsCmd := fmt.Sprintf("%s logs terasky-insights", containerEngine)
+		containerLogsOutput, logsErr := execCommandOnce(containerLogsCmd)
+		if logsErr != nil && debug {
+			fmt.Printf("Failed to get container logs: %s\n", containerLogsOutput)
 		}
 		printChecklist()
 	}
 
-	return output
-}
-
-func stopContainer(cmd *cobra.Command, args []string) {
-	stopTeraSkyInsightsContianer()
-}
-
-// create loadPackage cobra func
-func loadPackage(cmd *cobra.Command, args []string) {
-	spinner := NewSpinner()
-	spinner.Start()
-
-	defer spinner.Stop()
-
-	packageValue := args[0]
-	ValidatePackageValue(cmd, packageValue)
-	loadModDashbaord(packageValue)
-}
-
-func getVersionInfo(cmd *cobra.Command, args []string) {
-	fmt.Printf("Version: %s\n", version)
-}
-
-func (s *Spinner) Start() {
-	s.active = true
-	go func() {
-		for {
-			for _, c := range s.character {
-				if !s.active {
-					return
-				}
-				fmt.Printf("\r%s Please wait...", c)
-				time.Sleep(100 * time.Millisecond)
-			}
-		}
-	}()
-}
-
-func (s *Spinner) Stop() {
-	s.active = false
-	s.stopChan <- struct{}{}
-}
-
-func waitForContainerReadiness() bool {
-	maxAttempts := 30
-	attempt := 0
-
-	for attempt < maxAttempts {
-		// Use a shell to check if /tmp/ready exists inside the container
-		results := execCommand("exec terasky-insights /bin/sh -c 'test -f /tmp/ready && echo 1 || echo 0'")
-		if results == "1" {
-			return true
-		}
-		time.Sleep(2 * time.Second) // wait for 2 seconds before retrying
-		attempt++
+	if err != nil {
+		return fmt.Sprintf("Error: %s", err)
 	}
 
-	return false
+	return output
 }
 
 // printChecklist prints a beautifully formatted checklist for the user.
@@ -298,6 +255,6 @@ func printChecklist() {
 	for i, item := range checklist {
 		fmt.Printf("✅ **Step %d**: %s\n", i+1, item)
 	}
-	log.Fatal("Unable to run  ")
+	log.Fatal("Unable to run ")
 
 }
