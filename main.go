@@ -111,7 +111,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	homeDir := currentUser.HomeDir
 
 	// todo support env variable to get AWS credentials
-	fmt.Println("Downloading image and run ")
+	log.Println("Downloading image and run new container")
 	execCommand(fmt.Sprintf("run -d -p 9193:9193 -p 9194:9194 -v %s/.aws:/tmp/aws:ro "+
 		"--name terasky-insights --pull always --entrypoint /usr/local/bin/entrypoint.sh ghcr.io/elad-ts/terasky-insights:latest %s %s",
 		homeDir,
@@ -121,7 +121,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 	// Wait for container readiness
 	ready := waitForContainerReadiness()
 	if !ready {
-		fmt.Println("Container did not become ready in time")
+		printChecklist()
 		return
 	}
 
@@ -129,7 +129,7 @@ func runContainer(cmd *cobra.Command, args []string, flags RunCommandFlags) {
 }
 
 func loadModDashbaord(modName string) {
-	fmt.Println("Running Assessment")
+	log.Println("Running Assessment")
 
 	execCommandWithRetry(fmt.Sprintf(
 		"exec terasky-insights /bin/sh -c 'cd /mods/%s && "+
@@ -143,8 +143,8 @@ func loadModDashbaord(modName string) {
 	execCommand(fmt.Sprintf("cp terasky-insights:/mods/%s.csv ./%s.csv", modName, modName))
 
 	dir, _ := os.Getwd()
-	fmt.Printf("Report Exported:  %s/%s.csv\n", dir, modName)
-	fmt.Println("Report Dashboard:  http://0.0.0.0:9194")
+	log.Printf("Report Exported:  %s/%s.csv\n", dir, modName)
+	log.Println("Report Dashboard:  http://0.0.0.0:9194")
 }
 
 func stopTeraSkyInsightsContianer() {
@@ -152,7 +152,7 @@ func stopTeraSkyInsightsContianer() {
 	if containerId != "" {
 		execCommand(fmt.Sprintf("rm -f -v %s", strings.TrimSpace(containerId)))
 	}
-	fmt.Println("Stopping and Deleting terasky-insights")
+	log.Println("Stopping and Deleting terasky-insights")
 }
 
 var stopCmd = &cobra.Command{
@@ -312,6 +312,6 @@ func printChecklist() {
 	for i, item := range checklist {
 		fmt.Printf("✅ **Step %d**: %s\n", i+1, item)
 	}
-	log.Fatal("Unable to run 	 ")
+	log.Fatal("Unable to run terasky insights")
 
 }
